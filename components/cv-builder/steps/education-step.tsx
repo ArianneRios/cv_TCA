@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { DateSelector } from "@/components/ui/date-selector"
+import { CalendarDatePicker } from "@/components/ui/calendar-date-picker"
 import type { Education } from "@/lib/cv-types"
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -22,6 +22,7 @@ const AI_SUGGESTIONS = [
 
 export function EducationStep({ data, onChange }: EducationStepProps) {
   const [loadingAI, setLoadingAI] = useState<string | null>(null)
+  const [currentlyStudying, setCurrentlyStudying] = useState<Record<string, boolean>>({})
 
   const addEducation = () => {
     const newEducation: Education = {
@@ -39,6 +40,11 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
 
   const removeEducation = (id: string) => {
     onChange(data.filter((edu) => edu.id !== id))
+    setCurrentlyStudying((prev) => {
+      const newState = { ...prev }
+      delete newState[id]
+      return newState
+    })
   }
 
   const updateEducation = (id: string, field: keyof Education, value: string) => {
@@ -47,6 +53,15 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
         edu.id === id ? { ...edu, [field]: value } : edu
       )
     )
+  }
+
+  const handleCurrentlyStudyingChange = (id: string, checked: boolean) => {
+    setCurrentlyStudying((prev) => ({ ...prev, [id]: checked }))
+    if (checked) {
+      updateEducation(id, "endDate", "Presente")
+    } else {
+      updateEducation(id, "endDate", "")
+    }
   }
 
   const handleAIImprove = (id: string) => {
@@ -61,18 +76,18 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-foreground">Education</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Educacion</h2>
         <p className="text-muted-foreground mt-1">
-          Add your educational background, starting with the most recent.
+          Agrega tu formacion academica, comenzando por la mas reciente.
         </p>
       </div>
 
       {data.length === 0 ? (
         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-          <p className="text-muted-foreground mb-4">No education added yet</p>
+          <p className="text-muted-foreground mb-4">No has agregado educacion aun</p>
           <Button onClick={addEducation} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Education
+            Agregar Educacion
           </Button>
         </div>
       ) : (
@@ -84,7 +99,7 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-medium text-muted-foreground">
-                  Education {index + 1}
+                  Educacion {index + 1}
                 </span>
                 <Button
                   variant="ghost"
@@ -98,9 +113,9 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
 
               <div className="grid gap-4">
                 <div className="space-y-2">
-                  <Label>Institution *</Label>
+                  <Label>Institucion *</Label>
                   <Input
-                    placeholder="Harvard University"
+                    placeholder="Universidad de Buenos Aires"
                     value={edu.institution}
                     onChange={(e) =>
                       updateEducation(edu.id, "institution", e.target.value)
@@ -110,9 +125,9 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Degree *</Label>
+                    <Label>Titulo *</Label>
                     <Input
-                      placeholder="Bachelor of Science"
+                      placeholder="Licenciatura en Administracion"
                       value={edu.degree}
                       onChange={(e) =>
                         updateEducation(edu.id, "degree", e.target.value)
@@ -120,9 +135,9 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Field of Study *</Label>
+                    <Label>Campo de Estudio *</Label>
                     <Input
-                      placeholder="Computer Science"
+                      placeholder="Ciencias de la Computacion"
                       value={edu.field}
                       onChange={(e) =>
                         updateEducation(edu.id, "field", e.target.value)
@@ -131,33 +146,31 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Fecha Inicio</Label>
-                    <DateSelector
+                    <CalendarDatePicker
                       value={edu.startDate}
                       onChange={(value) =>
                         updateEducation(edu.id, "startDate", value)
                       }
+                      placeholder="Seleccionar fecha"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Fecha Fin</Label>
-                    <DateSelector
+                    <CalendarDatePicker
                       value={edu.endDate}
                       onChange={(value) =>
                         updateEducation(edu.id, "endDate", value)
                       }
-                      showPresent
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>GPA</Label>
-                    <Input
-                      placeholder="3.8/4.0"
-                      value={edu.gpa}
-                      onChange={(e) =>
-                        updateEducation(edu.id, "gpa", e.target.value)
+                      placeholder="Seleccionar fecha"
+                      disabled={currentlyStudying[edu.id]}
+                      showCurrentlyHere
+                      currentlyHereLabel="Actualmente estudio aqui"
+                      isCurrentlyHere={currentlyStudying[edu.id] || false}
+                      onCurrentlyHereChange={(checked) =>
+                        handleCurrentlyStudyingChange(edu.id, checked)
                       }
                     />
                   </div>
@@ -165,7 +178,7 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Achievements / Activities</Label>
+                    <Label>Logros / Actividades</Label>
                     <Button
                       type="button"
                       variant="ghost"
@@ -179,11 +192,11 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
                       ) : (
                         <Sparkles className="h-3 w-3" />
                       )}
-                      Improve with AI
+                      Mejorar con IA
                     </Button>
                   </div>
                   <Textarea
-                    placeholder="Dean's List, Relevant coursework, Clubs..."
+                    placeholder="Lista de honor, cursos relevantes, clubes..."
                     value={edu.achievements}
                     onChange={(e) =>
                       updateEducation(edu.id, "achievements", e.target.value)
@@ -197,7 +210,7 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
 
           <Button onClick={addEducation} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Another Education
+            Agregar Otra Educacion
           </Button>
         </div>
       )}

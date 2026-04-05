@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { DateSelector } from "@/components/ui/date-selector"
+import { CalendarDatePicker } from "@/components/ui/calendar-date-picker"
 import type { Experience } from "@/lib/cv-types"
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -15,13 +15,14 @@ interface ExperienceStepProps {
 }
 
 const AI_SUGGESTIONS = [
-  "• Led cross-functional team of 8 engineers to deliver a new customer-facing feature that increased user engagement by 35%\n• Architected and implemented a microservices solution that reduced system latency by 60%\n• Mentored 3 junior developers through code reviews and pair programming sessions",
-  "• Spearheaded the migration of legacy systems to cloud infrastructure, resulting in 40% cost reduction\n• Developed and maintained RESTful APIs serving 10M+ daily requests\n• Collaborated with product managers to define technical requirements and project timelines",
-  "• Built automated testing framework that improved code coverage from 45% to 92%\n• Optimized database queries resulting in 50% faster page load times\n• Presented technical proposals to stakeholders and secured buy-in for major initiatives",
+  "• Lidere un equipo multifuncional de 8 ingenieros para entregar una nueva funcionalidad que aumento el engagement de usuarios en 35%\n• Arquitecte e implemente una solucion de microservicios que redujo la latencia del sistema en 60%\n• Mentorie a 3 desarrolladores junior a traves de revisiones de codigo y sesiones de pair programming",
+  "• Lideré la migracion de sistemas legacy a infraestructura cloud, resultando en 40% de reduccion de costos\n• Desarrolle y mantuve APIs RESTful sirviendo mas de 10M de solicitudes diarias\n• Colabore con product managers para definir requerimientos tecnicos y cronogramas de proyecto",
+  "• Construi un framework de testing automatizado que mejoro la cobertura de codigo del 45% al 92%\n• Optimice consultas de base de datos resultando en 50% de mejora en tiempos de carga\n• Presente propuestas tecnicas a stakeholders y asegure aprobacion para iniciativas importantes",
 ]
 
 export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
   const [loadingAI, setLoadingAI] = useState<string | null>(null)
+  const [currentlyWorking, setCurrentlyWorking] = useState<Record<string, boolean>>({})
 
   const addExperience = () => {
     const newExperience: Experience = {
@@ -38,6 +39,11 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
 
   const removeExperience = (id: string) => {
     onChange(data.filter((exp) => exp.id !== id))
+    setCurrentlyWorking((prev) => {
+      const newState = { ...prev }
+      delete newState[id]
+      return newState
+    })
   }
 
   const updateExperience = (id: string, field: keyof Experience, value: string) => {
@@ -48,9 +54,17 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
     )
   }
 
+  const handleCurrentlyWorkingChange = (id: string, checked: boolean) => {
+    setCurrentlyWorking((prev) => ({ ...prev, [id]: checked }))
+    if (checked) {
+      updateExperience(id, "endDate", "Presente")
+    } else {
+      updateExperience(id, "endDate", "")
+    }
+  }
+
   const handleAIImprove = (id: string) => {
     setLoadingAI(id)
-    // Simulate AI improvement
     setTimeout(() => {
       const randomSuggestion = AI_SUGGESTIONS[Math.floor(Math.random() * AI_SUGGESTIONS.length)]
       updateExperience(id, "description", randomSuggestion)
@@ -61,18 +75,18 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-foreground">Experience</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Experiencia</h2>
         <p className="text-muted-foreground mt-1">
-          Add your work experience, starting with the most recent position.
+          Agrega tu experiencia laboral, comenzando por la posicion mas reciente.
         </p>
       </div>
 
       {data.length === 0 ? (
         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-          <p className="text-muted-foreground mb-4">No experience added yet</p>
+          <p className="text-muted-foreground mb-4">No has agregado experiencia aun</p>
           <Button onClick={addExperience} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Experience
+            Agregar Experiencia
           </Button>
         </div>
       ) : (
@@ -84,7 +98,7 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-medium text-muted-foreground">
-                  Experience {index + 1}
+                  Experiencia {index + 1}
                 </span>
                 <Button
                   variant="ghost"
@@ -99,7 +113,7 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
               <div className="grid gap-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Company *</Label>
+                    <Label>Empresa *</Label>
                     <Input
                       placeholder="Google"
                       value={exp.company}
@@ -109,9 +123,9 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Position *</Label>
+                    <Label>Posicion *</Label>
                     <Input
-                      placeholder="Software Engineer"
+                      placeholder="Ingeniero de Software"
                       value={exp.position}
                       onChange={(e) =>
                         updateExperience(exp.id, "position", e.target.value)
@@ -120,41 +134,50 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Ubicacion</Label>
-                    <Input
-                      placeholder="San Francisco, CA"
-                      value={exp.location}
-                      onChange={(e) =>
-                        updateExperience(exp.id, "location", e.target.value)
-                      }
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Ubicacion</Label>
+                  <Input
+                    placeholder="Ciudad de Mexico, Mexico"
+                    value={exp.location}
+                    onChange={(e) =>
+                      updateExperience(exp.id, "location", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Fecha Inicio</Label>
-                    <DateSelector
+                    <CalendarDatePicker
                       value={exp.startDate}
                       onChange={(value) =>
                         updateExperience(exp.id, "startDate", value)
                       }
+                      placeholder="Seleccionar fecha"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Fecha Fin</Label>
-                    <DateSelector
+                    <CalendarDatePicker
                       value={exp.endDate}
                       onChange={(value) =>
                         updateExperience(exp.id, "endDate", value)
                       }
-                      showPresent
+                      placeholder="Seleccionar fecha"
+                      disabled={currentlyWorking[exp.id]}
+                      showCurrentlyHere
+                      currentlyHereLabel="Actualmente trabajo aqui"
+                      isCurrentlyHere={currentlyWorking[exp.id] || false}
+                      onCurrentlyHereChange={(checked) =>
+                        handleCurrentlyWorkingChange(exp.id, checked)
+                      }
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Description *</Label>
+                    <Label>Descripcion *</Label>
                     <Button
                       type="button"
                       variant="ghost"
@@ -168,11 +191,11 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
                       ) : (
                         <Sparkles className="h-3 w-3" />
                       )}
-                      Improve with AI
+                      Mejorar con IA
                     </Button>
                   </div>
                   <Textarea
-                    placeholder="• Led development of new features that increased user engagement by 25%&#10;• Collaborated with cross-functional teams to deliver projects on time&#10;• Mentored junior developers and conducted code reviews"
+                    placeholder="• Lidere el desarrollo de nuevas funcionalidades que aumentaron el engagement de usuarios en 25%&#10;• Colabore con equipos multifuncionales para entregar proyectos a tiempo&#10;• Mentorie a desarrolladores junior y realice revisiones de codigo"
                     value={exp.description}
                     onChange={(e) =>
                       updateExperience(exp.id, "description", e.target.value)
@@ -186,7 +209,7 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
 
           <Button onClick={addExperience} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Another Experience
+            Agregar Otra Experiencia
           </Button>
         </div>
       )}
