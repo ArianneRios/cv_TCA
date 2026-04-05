@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import type { CVData } from "@/lib/cv-types"
 import { CVTemplate, type TemplateType } from "../cv-templates"
-import { Download, FileText, Pencil, Save, Loader2 } from "lucide-react"
+import { Download, FileText, Pencil, Save } from "lucide-react"
 import { useState, useRef } from "react"
 
 interface PreviewStepProps {
@@ -20,7 +20,6 @@ const templates: { id: TemplateType; name: string }[] = [
 export function PreviewStep({ data, onEditSection }: PreviewStepProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("harvard")
   const [saving, setSaving] = useState(false)
-  const [exportingPDF, setExportingPDF] = useState(false)
   const cvRef = useRef<HTMLDivElement>(null)
 
   const handleSaveProgress = () => {
@@ -31,51 +30,45 @@ export function PreviewStep({ data, onEditSection }: PreviewStepProps) {
     }, 1000)
   }
 
-  const handleExportPDF = async () => {
-    if (!cvRef.current) return
+  const handleExportPDF = () => {
+    // Use browser's native print functionality to save as PDF
+    const printWindow = window.open('', '_blank')
+    if (!printWindow || !cvRef.current) return
+
+    const cvContent = cvRef.current.innerHTML
     
-    setExportingPDF(true)
-    
-    try {
-      // Dynamic import to avoid SSR issues
-      const html2canvas = (await import("html2canvas")).default
-      const { jsPDF } = await import("jspdf")
-      
-      const canvas = await html2canvas(cvRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      })
-      
-      const imgData = canvas.toDataURL("image/png")
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      })
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
-      const imgX = (pdfWidth - imgWidth * ratio) / 2
-      const imgY = 0
-      
-      pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio)
-      
-      const fileName = data.personalInfo.fullName 
-        ? `CV_${data.personalInfo.fullName.replace(/\s+/g, "_")}.pdf`
-        : "mi_cv.pdf"
-      
-      pdf.save(fileName)
-    } catch (error) {
-      console.error("Error generating PDF:", error)
-      alert("Error al generar el PDF. Por favor intenta de nuevo.")
-    } finally {
-      setExportingPDF(false)
-    }
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>CV - ${data.personalInfo.fullName || 'Mi CV'}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Times New Roman', Times, serif;
+              background: white;
+              color: black;
+            }
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        </head>
+        <body>
+          ${cvContent}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.close();
+              }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
   }
 
   const handleExportDOCX = () => {
@@ -130,14 +123,9 @@ export function PreviewStep({ data, onEditSection }: PreviewStepProps) {
           variant="default" 
           size="sm" 
           className="gap-2"
-          disabled={exportingPDF}
         >
-          {exportingPDF ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <FileText className="h-4 w-4" />
-          )}
-          {exportingPDF ? "Generando PDF..." : "Descargar PDF"}
+          <FileText className="h-4 w-4" />
+          Descargar PDF
         </Button>
         <Button onClick={handleExportDOCX} variant="outline" size="sm" className="gap-2">
           <Download className="h-4 w-4" />
