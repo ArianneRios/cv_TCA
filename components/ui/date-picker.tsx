@@ -24,21 +24,31 @@ interface DatePickerProps {
 export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha", className }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   
-  // Parse the string value to Date object if it's in "MMM yyyy" format
+  // Parse the string value to Date object
   const parseDate = (dateString: string): Date | undefined => {
     if (!dateString) return undefined
     
     // Try parsing different formats
     const formats = ["MMM yyyy", "MMMM yyyy", "MM/yyyy", "yyyy-MM"]
+    
+    // Try Spanish locale first
     for (const fmt of formats) {
-      const parsed = parse(dateString, fmt, new Date(), { locale: es })
-      if (isValid(parsed)) return parsed
+      try {
+        const parsed = parse(dateString, fmt, new Date(), { locale: es })
+        if (isValid(parsed)) return parsed
+      } catch {
+        // Continue to next format
+      }
     }
     
     // Try English parsing
     for (const fmt of formats) {
-      const parsed = parse(dateString, fmt, new Date())
-      if (isValid(parsed)) return parsed
+      try {
+        const parsed = parse(dateString, fmt, new Date())
+        if (isValid(parsed)) return parsed
+      } catch {
+        // Continue to next format
+      }
     }
     
     return undefined
@@ -48,7 +58,7 @@ export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha",
 
   const handleSelect = (selectedDate: Date | undefined) => {
     if (selectedDate && onChange) {
-      // Format as "MMM yyyy" (e.g., "Sep 2023")
+      // Format as "MMM yyyy" (e.g., "sep 2023")
       const formatted = format(selectedDate, "MMM yyyy", { locale: es })
       onChange(formatted)
     }
@@ -76,9 +86,9 @@ export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha",
           selected={date}
           onSelect={handleSelect}
           captionLayout="dropdown"
-          fromYear={1950}
-          toYear={2050}
-          defaultMonth={date}
+          startMonth={new Date(1950, 0)}
+          endMonth={new Date(2050, 11)}
+          defaultMonth={date || new Date()}
         />
       </PopoverContent>
     </Popover>
