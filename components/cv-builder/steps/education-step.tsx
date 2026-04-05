@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateSelector } from "@/components/ui/date-selector"
 import type { Education } from "@/lib/cv-types"
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -134,8 +134,7 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Fecha Inicio</Label>
-                    <DatePicker
-                      placeholder="Seleccionar fecha"
+                    <DateSelector
                       value={edu.startDate}
                       onChange={(value) =>
                         updateEducation(edu.id, "startDate", value)
@@ -144,12 +143,12 @@ export function EducationStep({ data, onChange }: EducationStepProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Fecha Fin</Label>
-                    <DatePicker
-                      placeholder="Seleccionar fecha"
+                    <DateSelector
                       value={edu.endDate}
                       onChange={(value) =>
                         updateEducation(edu.id, "endDate", value)
                       }
+                      showPresent
                     />
                   </div>
                   <div className="space-y-2">

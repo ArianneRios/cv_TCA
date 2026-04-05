@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateSelector } from "@/components/ui/date-selector"
 import type { Leadership } from "@/lib/cv-types"
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -121,8 +121,7 @@ export function LeadershipStep({ data, onChange }: LeadershipStepProps) {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Fecha Inicio</Label>
-                    <DatePicker
-                      placeholder="Seleccionar fecha"
+                    <DateSelector
                       value={lead.startDate}
                       onChange={(value) =>
                         updateLeadership(lead.id, "startDate", value)
@@ -131,12 +130,12 @@ export function LeadershipStep({ data, onChange }: LeadershipStepProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Fecha Fin</Label>
-                    <DatePicker
-                      placeholder="Seleccionar fecha"
+                    <DateSelector
                       value={lead.endDate}
                       onChange={(value) =>
                         updateLeadership(lead.id, "endDate", value)
                       }
+                      showPresent
                     />
                   </div>
                 </div>

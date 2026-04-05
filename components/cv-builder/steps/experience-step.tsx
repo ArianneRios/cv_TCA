@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateSelector } from "@/components/ui/date-selector"
 import type { Experience } from "@/lib/cv-types"
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -133,8 +133,7 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Fecha Inicio</Label>
-                    <DatePicker
-                      placeholder="Seleccionar fecha"
+                    <DateSelector
                       value={exp.startDate}
                       onChange={(value) =>
                         updateExperience(exp.id, "startDate", value)
@@ -143,12 +142,12 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Fecha Fin</Label>
-                    <DatePicker
-                      placeholder="Seleccionar fecha"
+                    <DateSelector
                       value={exp.endDate}
                       onChange={(value) =>
                         updateExperience(exp.id, "endDate", value)
                       }
+                      showPresent
                     />
                   </div>
                 </div>
