@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button"
 import type { CVData } from "@/lib/cv-types"
 import { CVTemplate, type TemplateType } from "../cv-templates"
-import { Download, FileText, Pencil, Save } from "lucide-react"
-import { useState } from "react"
+import { Download, FileText, Pencil, Save, Loader2 } from "lucide-react"
+import { useState, useRef } from "react"
+import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
 
 interface PreviewStepProps {
   data: CVData
@@ -20,31 +22,72 @@ const templates: { id: TemplateType; name: string }[] = [
 export function PreviewStep({ data, onEditSection }: PreviewStepProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>("harvard")
   const [saving, setSaving] = useState(false)
+  const [exportingPDF, setExportingPDF] = useState(false)
+  const cvRef = useRef<HTMLDivElement>(null)
 
   const handleSaveProgress = () => {
     setSaving(true)
     // Simulate save (UI only)
     setTimeout(() => {
       setSaving(false)
-      alert("Progress saved! (Demo only)")
+      alert("Progreso guardado! (Demo only)")
     }, 1000)
   }
 
-  const handleExportPDF = () => {
-    alert("PDF export coming soon! (Demo only)")
+  const handleExportPDF = async () => {
+    if (!cvRef.current) return
+    
+    setExportingPDF(true)
+    
+    try {
+      const canvas = await html2canvas(cvRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      })
+      
+      const imgData = canvas.toDataURL("image/png")
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      })
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = canvas.width
+      const imgHeight = canvas.height
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
+      const imgX = (pdfWidth - imgWidth * ratio) / 2
+      const imgY = 0
+      
+      pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio)
+      
+      const fileName = data.personalInfo.fullName 
+        ? `CV_${data.personalInfo.fullName.replace(/\s+/g, "_")}.pdf`
+        : "mi_cv.pdf"
+      
+      pdf.save(fileName)
+    } catch (error) {
+      console.error("Error generating PDF:", error)
+      alert("Error al generar el PDF. Por favor intenta de nuevo.")
+    } finally {
+      setExportingPDF(false)
+    }
   }
 
   const handleExportDOCX = () => {
-    alert("DOCX export coming soon! (Demo only)")
+    alert("Exportar DOCX - Proximamente!")
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Preview Your CV</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Vista Previa de tu CV</h2>
           <p className="text-muted-foreground mt-1">
-            {"Review your CV and export when ready."}
+            {"Revisa tu CV y descargalo cuando estes listo."}
           </p>
         </div>
         <Button
@@ -55,13 +98,13 @@ export function PreviewStep({ data, onEditSection }: PreviewStepProps) {
           className="gap-2"
         >
           <Save className="h-4 w-4" />
-          {saving ? "Saving..." : "Save Progress"}
+          {saving ? "Guardando..." : "Guardar Progreso"}
         </Button>
       </div>
 
       {/* Template Selector */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium text-muted-foreground">Template:</span>
+        <span className="text-sm font-medium text-muted-foreground">Plantilla:</span>
         <div className="flex gap-1 p-1 bg-muted rounded-lg">
           {templates.map((template) => (
             <button
@@ -81,13 +124,23 @@ export function PreviewStep({ data, onEditSection }: PreviewStepProps) {
 
       {/* Export Buttons */}
       <div className="flex flex-wrap gap-2">
-        <Button onClick={handleExportPDF} variant="outline" size="sm" className="gap-2">
-          <FileText className="h-4 w-4" />
-          Export PDF
+        <Button 
+          onClick={handleExportPDF} 
+          variant="default" 
+          size="sm" 
+          className="gap-2"
+          disabled={exportingPDF}
+        >
+          {exportingPDF ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileText className="h-4 w-4" />
+          )}
+          {exportingPDF ? "Generando PDF..." : "Descargar PDF"}
         </Button>
         <Button onClick={handleExportDOCX} variant="outline" size="sm" className="gap-2">
           <Download className="h-4 w-4" />
-          Export DOCX
+          Exportar DOCX
         </Button>
       </div>
 
@@ -95,16 +148,18 @@ export function PreviewStep({ data, onEditSection }: PreviewStepProps) {
       <div className="relative bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         {/* Section Edit Buttons */}
         {onEditSection && (
-          <div className="absolute right-4 top-4 flex flex-col gap-2 z-10">
+          <div className="absolute right-4 top-4 flex flex-col gap-2 z-10 print:hidden">
             <EditButton label="Personal" onClick={() => onEditSection(1)} />
-            <EditButton label="Education" onClick={() => onEditSection(2)} />
-            <EditButton label="Experience" onClick={() => onEditSection(3)} />
-            <EditButton label="Leadership" onClick={() => onEditSection(4)} />
-            <EditButton label="Skills" onClick={() => onEditSection(5)} />
+            <EditButton label="Educacion" onClick={() => onEditSection(2)} />
+            <EditButton label="Experiencia" onClick={() => onEditSection(3)} />
+            <EditButton label="Liderazgo" onClick={() => onEditSection(4)} />
+            <EditButton label="Habilidades" onClick={() => onEditSection(5)} />
           </div>
         )}
         
-        <CVTemplate data={data} template={selectedTemplate} />
+        <div ref={cvRef} className="bg-white">
+          <CVTemplate data={data} template={selectedTemplate} />
+        </div>
       </div>
     </div>
   )

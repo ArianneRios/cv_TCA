@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Experience } from "@/lib/cv-types"
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
 import { useState } from "react"
@@ -121,7 +122,7 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
 
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Location</Label>
+                    <Label>Ubicacion</Label>
                     <Input
                       placeholder="San Francisco, CA"
                       value={exp.location}
@@ -131,22 +132,22 @@ export function ExperienceStep({ data, onChange }: ExperienceStepProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Start Date</Label>
-                    <Input
-                      placeholder="Jan 2022"
+                    <Label>Fecha Inicio</Label>
+                    <DatePicker
+                      placeholder="Seleccionar fecha"
                       value={exp.startDate}
-                      onChange={(e) =>
-                        updateExperience(exp.id, "startDate", e.target.value)
+                      onChange={(value) =>
+                        updateExperience(exp.id, "startDate", value)
                       }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>End Date</Label>
-                    <Input
-                      placeholder="Present"
+                    <Label>Fecha Fin</Label>
+                    <DatePicker
+                      placeholder="Seleccionar fecha"
                       value={exp.endDate}
-                      onChange={(e) =>
-                        updateExperience(exp.id, "endDate", e.target.value)
+                      onChange={(value) =>
+                        updateExperience(exp.id, "endDate", value)
                       }
                     />
                   </div>
